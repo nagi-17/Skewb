@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skewb</title>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header id="top-bar">
+        <img src="https://yt3.googleusercontent.com/ytc/AIdro_lp5RPKxsgc_GGP5150cfSRPkVTKTV-DCDvII-EcX_c3QU=s160-c-k-c0x00ffffff-no-rj" alt="Logo" width="50" height="50"> 
+        <div class="draw-tools">
+            <button id="tool-select" class="active">Select</button>
+            <button id="tool-freedraw">Brush</button>
+            <button id="tool-rectangle">Rectangle</button>
+            <button id="tool-circle">Circle</button>
+            <button id="tool-triangle">Triangle</button>
+            <button id="tool-text">Text Box</button>
+            <button id="tool-image">Insert Image</button>
+        </div>
+    </header>
+
+    <div id="workspace-container">
+
+        <main id="canvas-container">
+            <canvas id="drawing-board"></canvas>
+        </main>
+
+        <aside id="properties-panel">
+            <div class="property-group">
+                <label for="stroke-color">Stroke Color:</label>
+                <input type="color" id="stroke-color" value="#000000">
+
+                <label for="fill-color">Fill Color:</label>
+                <input type="color" id="fill-color" value="#transparent">
+
+                <label for="stroke-width">Stroke Width:</label>
+                <input type="range" id="stroke-width" min="1" max="50" value="5">
+
+                <label for="opacity">Opacity:</label>
+                <input type="range" id="opacity" min="0" max="1" step="0.1" value="1">
+            </div>
+        </aside>
+
+    </div>
+
+    <footer id="bottom-bar">
+        <div class="global-controls">
+            <button id="theme-toggle">Toggle Dark Mode</button>
+            <button id="undo-button">Undo</button>
+            <button id="redo-button">Redo</button>
+            <button id="clear-canvas">Clear Canvas</button>
+        </div>
+    </footer>
+
+    <script src="func.js"></script>
+</body>
+</html>
