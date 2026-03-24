@@ -14,6 +14,8 @@
         <div class="draw-tools">
             <button id="tool-select" class="active">Select</button>
             <button id="tool-freedraw">Brush</button>
+            <button id="tool-eraser">Eraser</button>
+            <button id="tool-line">Line</button>
             <button id="tool-rectangle">Rectangle</button>
             <button id="tool-circle">Circle</button>
             <button id="tool-triangle">Triangle</button>
@@ -30,24 +32,31 @@
 
         <aside id="properties-panel">
             <div class="property-group">
-                <label for="stroke-color">Stroke Color:</label>
+                <label for="stroke-color">STROKE COLOR:</label>
                 <input type="color" id="stroke-color" value="#000000">
 
-                <label for="fill-color">Fill Color:</label>
+                <label for="fill-color">FILL COLOR:</label>
                 <input type="color" id="fill-color" value="#transparent">
 
-                <label for="stroke-width">Stroke Width:</label>
+                <label for="stroke-width">STROKE WIDTH:</label>
                 <input type="range" id="stroke-width" min="1" max="50" value="5">
 
-                <label for="opacity">Opacity:</label>
+                <label for="opacity">OPACITY:</label>
                 <input type="range" id="opacity" min="0" max="1" step="0.1" value="1">
+
+                <label for="stroke-style">STROKE STYLE</label>
+                <div class="style-buttons">
+                    <button id="style-solid" class="active">Solid</button>
+                    <button id="style-dashed">Dashed</button>
+                    <button id="style-dotted">Dotted</button>
+                </div>
             </div>
         </aside>
 
     </div>
 
     <footer id="bottom-bar">
-        <div class="global-controls">
+        <div class="controls">
             <button id="theme-toggle">Toggle Dark Mode</button>
             <button id="undo-button">Undo</button>
             <button id="redo-button">Redo</button>
