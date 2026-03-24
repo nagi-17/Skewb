@@ -6,7 +6,7 @@
 
 body {
   font-family: sans-serif;
-  font-size: 13rem;
+  font-size: 1rem;
   background: #f5f5f5;
   color: #222;
   display: flex;
@@ -15,13 +15,23 @@ body {
   overflow: hidden;
 }
 
+body.dark-mode {
+  background: #1f1f1f;
+  color: #eee;
+}
+
 #top-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
   background: #fff;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 0.0625rem solid #ddd;
+}
+
+body.dark-mode #top-bar {
+  background: #2a2a2a;
+  border-color: #444;
 }
 
 #top-bar img {
@@ -30,29 +40,45 @@ body {
 
 .draw-tools {
   display: flex;
-  gap: 6px;
+  gap: 0.375rem;
   flex-wrap: wrap;
+  margin: auto;
   justify-content: center;
 }
 
 button {
-  padding: 6px 12px;
+  padding: 0.375rem 0.75rem;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 0.3125rem;
   background: #f0f0f0;
   color: #222;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   transition: background 0.5s;
 }
 
 button:hover {
-  background: #696969;
+  background: #cccccc;
 }
 
 button.active {
   background: #e05a00;
   color: #fff;
+  border-color: #e05a00;
+}
+
+body.dark-mode button {
+  background: #333;
+  color: #eee;
+  border-color: #555;
+}
+
+body.dark-mode button:hover {
+  background: #696969;
+}
+
+body.dark-mode button.active {
+  background: #e05a00;
   border-color: #e05a00;
 }
 
@@ -69,6 +95,10 @@ button.active {
   overflow: hidden;
 }
 
+body.dark-mode #canvas-container {
+  background: #2c2c2c;
+}
+
 #drawing-board {
   display: block;
   width: 100%;
@@ -77,32 +107,42 @@ button.active {
 }
 
 #properties-panel {
-  width: 180px;
+  width: 11.25rem;
   background: #fafafa;
-  border-left: 1px solid #ddd;
-  padding: 16px 12px;
+  border-left: 0.0625px solid #ddd;
+  padding: 1rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
+}
+
+body.dark-mode #properties-panel {
+  background: #252525;
+  border-color: #444;
 }
 
 .property-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: #666;
   letter-spacing: 0.05em;
 }
 
+body.dark-mode label {
+  color: #aaa;
+}
+
+
 input[type="color"] {
   width: 100%;
-  height: 20px;
+  height: 1.25rem;
   border: 0.5px solid #ccc;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   cursor: pointer;
   background: none;
 }
@@ -110,39 +150,34 @@ input[type="color"] {
 input[type="range"] {
   width: 100%;
   cursor: pointer;
-  height: 6px;
+  height: 0.375rem;
 }
 
 .style-buttons{
   display: flex;
   width: 100%;
-  gap:2px;
+  gap:0.125rem;
 }
 
 .style-buttons button{
   flex:1;
-  padding:8px;
-  font-size: 10px;
+  padding:0.5rem;
+  font-size: 0.625rem;
 }
 
 #bottom-bar {
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   background: #fff;
   border-top: 1px solid #ddd;
 }
 
+body.dark-mode #bottom-bar {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
 .controls {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   justify-content: center;
-}
-
-#clear-canvas {
-  color: #c0392b;
-  border-color: #c0392b;
-}
-
-#clear-canvas:hover {
-  background: #c0392b;
-  color: #fff;
 }
