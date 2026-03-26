@@ -41,28 +41,46 @@ const canvas=document.getElementById("drawing-board");
 const ctx=canvas.getContext("2d");
 
 function f_resize() {
-    let imageData=ctx.getImageData(0, 0, canvas.width, canvas.height);
     canvas.width=canvas.offsetWidth;
     canvas.height=canvas.offsetHeight;
-    ctx.putImageData(imageData, 0, 0);
+    f_redraw();
 }
 window.addEventListener("load", f_resize);
 window.addEventListener("resize", f_resize);
 
 let draw=false;
-let prev_x, prev_y, prev_canvas;
-let arr=[];
+let prev_x, prev_y;
+let arr=[], arr_temp=[], current_brush_points=[];
 
-function getStrokeColor() { return document.getElementById("stroke-color").value; }
-function getStrokeWidth() { return document.getElementById("stroke-width").value; }
-function getOpacity()     { return document.getElementById("opacity").value; }
+function f_stroke_color() { return document.getElementById("stroke-color").value; }
+function f_stroke_width() { return document.getElementById("stroke-width").value; }
+function f_opacity()     { return document.getElementById("opacity").value; }
+function f_stroke_style(){
+    if (document.getElementById("style-dashed")&&document.getElementById("style-dashed").classList.contains("active")) 
+        return "style-dashed";
+    else if (document.getElementById("style-dotted")&&document.getElementById("style-dotted").classList.contains("active")) 
+        return "style-dotted";
+    else
+        return "solid";
+}
 
-function f_style() {
-    ctx.strokeStyle=getStrokeColor();
-    ctx.lineWidth=getStrokeWidth();
-    ctx.globalAlpha=getOpacity();
+function f_style(object) {
+    ctx.strokeStyle=object.stroke_color;
+    ctx.lineWidth=object.stroke_width;
+    ctx.globalAlpha=object.opacity;
     ctx.lineCap="round";
     ctx.lineJoin="round";
+    if (object.stroke_style==="style-dashed") {
+        ctx.setLineDash([object.stroke_width*3, object.stroke_width*2]);
+    } else if (object.stroke_style==="style-dotted") {
+        ctx.setLineDash([object.stroke_width/5, object.stroke_width*2]);
+    } else {
+        ctx.setLineDash([]);
+    }
+}
+
+function temp(){
+    return {stroke_color:f_stroke_color(), stroke_width:f_stroke_width(), opacity:f_opacity(), stroke_style:f_stroke_style()}
 }
 
 canvas.addEventListener("mousedown",f_draw);
@@ -70,13 +88,70 @@ canvas.addEventListener("mousemove",f_mouse_move);
 canvas.addEventListener("mouseup",f_stop);
 canvas.addEventListener("mouseleave",f_stop);
 
+function f_draw_object(object){
+    ctx.save();
+    f_style(object);
+    ctx.beginPath();
+    if (object.type==="brush")
+    {
+        if(object.points.length===0)
+        {
+            ctx.restore();
+            return;
+        }
+        ctx.moveTo(object.points[0].x, object.points[0].y);
+        for(let i=0; i<object.points.length; i++)
+        {
+            ctx.lineTo(object.points[i].x, object.points[i].y);
+        }
+        ctx.stroke();
+    }
+    else if(object.type==="line")
+    {
+        //console.log("Line");
+        ctx.moveTo(object.x1, object.y1);
+        ctx.lineTo(object.x2, object.y2);
+        ctx.stroke();
+    }
+    else if(object.type==="rectangle")
+    {
+        ctx.strokeRect(object.x, object.y, object.w, object.h);
+    }
+    else if (object.type==="circle")
+    {
+        ctx.arc(object.cx, object.cy, object.radius, 0, 2*Math.PI);
+        ctx.stroke();
+    }
+    else if (object.type==="triangle")
+    {
+        ctx.moveTo(object.x1, object.y1);
+        ctx.lineTo(object.x2, object.y2);
+        ctx.lineTo(object.x3, object.y3);
+        ctx.closePath();
+        ctx.stroke();
+    }
+    console.log("Restore");
+    ctx.restore();
+}
+
+function f_redraw(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha=1;
+    ctx.setLineDash([]);
+    for (let i=0; i<arr.length; i++)
+    {
+        f_draw_object(arr[i]);
+    }
+}
+
 function f_draw(event_1) {
     draw=true;
     prev_x=event_1.offsetX;
     prev_y=event_1.offsetY;
-    ctx.beginPath();
-    prev_canvas=ctx.getImageData(0, 0, canvas.width, canvas.height);
-    f_style();
+    if(selected_button==="brush")
+    {
+        current_brush_points=[{x:prev_x, y:prev_y}];
+    }
 }
 
 function f_mouse_move(event_2) {
@@ -86,75 +161,123 @@ function f_mouse_move(event_2) {
     let curr_y=event_2.offsetY;
 
     if (selected_button==="brush") {
-        ctx.lineTo(curr_x, curr_y);
+        current_brush_points.push({x:curr_x, y:curr_y});
+        let style=temp();
+        ctx.save();
+        f_style(style);
+        ctx.beginPath();
+        let temp_points=current_brush_points;
+        let temp_length=temp_points.length;
+        ctx.moveTo(temp_points[temp_length-2].x, temp_points[temp_length-2].y);
+        ctx.lineTo(temp_points[temp_length-1].x, temp_points[temp_length-1].y);
         ctx.stroke();
-    }
-
-    else if (selected_button==="eraser") {
-        let size=getStrokeWidth();
-        ctx.globalAlpha=1;
-        ctx.clearRect(curr_x-size/2, curr_y-size/2,size, size);
+        ctx.restore();
     }
 
     else if (selected_button==="line") {
-        ctx.putImageData(prev_canvas, 0, 0);
-        f_style();
-        ctx.beginPath();
-        ctx.moveTo(prev_x, prev_y);
-        ctx.lineTo(curr_x, curr_y);
-        ctx.stroke();
+        f_redraw();
+        let shape=Object.assign(temp(), {type:"line", x1:prev_x, y1:prev_y, x2:curr_x, y2:curr_y});
+        f_draw_object(shape);
     }
 
     else if (selected_button==="rectangle") {
-        ctx.putImageData(prev_canvas, 0, 0);
-        f_style();
-        ctx.beginPath();
-        ctx.strokeRect(prev_x, prev_y, curr_x-prev_x, curr_y-prev_y);
+        f_redraw();
+        let shape=Object.assign(temp(), {type:"rectangle", x:prev_x, y:prev_y, w:curr_x-prev_x, h:curr_y-prev_y});
+        f_draw_object(shape);
     }
 
     else if (selected_button==="circle") {
-        ctx.putImageData(prev_canvas, 0, 0);
-        f_style();
-        let radius=Math.sqrt(Math.pow(curr_x-prev_x, 2)+Math.pow(curr_y-prev_y,2));
-        ctx.beginPath();
-        ctx.arc(prev_x, prev_y, radius, 0, 2*Math.PI);
-        ctx.stroke();
+        f_redraw();
+        let r=Math.sqrt(Math.pow(curr_x-prev_x,2)+Math.pow(curr_y-prev_y,2));
+        let shape=Object.assign(temp(), {type:"circle", cx:prev_x, cy:prev_y, radius:r});
+        f_draw_object(shape);
     }
 
     else if (selected_button==="triangle") {
-        ctx.putImageData(prev_canvas, 0, 0);
-        f_style();
-        ctx.beginPath();
-        ctx.moveTo(prev_x, prev_y);
-        ctx.lineTo(curr_x, curr_y);
-        ctx.lineTo(prev_x-(curr_x-prev_x),curr_y);
-        ctx.closePath();
-        ctx.stroke();
+        f_redraw();
+        let shape=Object.assign(temp(), {type:"triangle", x1:prev_x, y1:prev_y, x2:curr_x, y2:curr_y, x3:2*prev_x-curr_x, y3:curr_y});
+        f_draw_object(shape);
     }
 }
 
-function f_stop() {
+function f_stop(event_3) {
     if (!draw) return;
     draw=false;
-    arr.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    let curr_x = (event_3 && event_3.offsetX !== undefined) ? event_3.offsetX : prev_x;
+    let curr_y = (event_3 && event_3.offsetY !== undefined) ? event_3.offsetY : prev_y;
+    let object=null;
+    if (selected_button==="brush")
+    {
+        if(current_brush_points.length>1)
+        {
+            object=Object.assign(temp(), {type:"brush", points:current_brush_points.slice()});
+        }
+        current_brush_points=[];
+    }
+    else if (selected_button==="line")
+    {
+        object=Object.assign(temp(), {type:"line", x1:prev_x, y1:prev_y, x2:curr_x, y2:curr_y});
+    }
+    else if (selected_button==="rectangle")
+    {
+        object=Object.assign(temp(), {type:"rectangle", x:prev_x, y:prev_y, w:curr_x-prev_x, h:curr_y-prev_y});
+    }
+    else if (selected_button==="circle")
+    {
+        let r=Math.sqrt(Math.pow(curr_x-prev_x,2)+Math.pow(curr_y-prev_y,2));
+        object=Object.assign(temp(), {type:"circle", cx:prev_x, cy:prev_y, radius:r});
+    }
+    else if (selected_button==="triangle")
+    {
+        object=Object.assign(temp(), {type:"triangle", x1:prev_x, y1:prev_y, x2:curr_x, y2:curr_y, x3:2*prev_x-curr_x, y3:curr_y});
+    }
+
+    if(object)
+    {
+        arr.push(object);
+        arr_temp=[];
+        f_redraw();
+    }
 }
 
 document.getElementById("undo").addEventListener("click", f_undo);
 function f_undo() {
     if (arr.length>0) {
-        arr.pop();
-        if (arr.length>0) {
-            ctx.putImageData(arr[arr.length-1],0,0);
-        } 
-        else 
-        {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        arr_temp.push(arr.pop());
+        f_redraw();
     }
 }
 
 document.getElementById("clear").addEventListener("click", f_clear);
 function f_clear() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     arr = [];
+    arr_temp=[];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+document.getElementById("redo").addEventListener("click", f_redo);
+function f_redo(){
+    if(arr_temp.length>0)
+    {
+        arr.push(arr_temp.pop());
+        f_redraw();
+    }
+}
+
+let selected_button_stroke_style="style-solid";
+let lastactive_stroke_style=document.getElementById("style-solid");
+let button_stroke_style=document.querySelectorAll(".style-buttons");
+
+for (let btn of button_stroke_style) {
+    btn.addEventListener("click", f_active_stroke_style);
+}
+
+function f_active_stroke_style(event) {
+    let buttonclick_stroke_style=event.target.id;
+    if (lastactive_stroke_style) 
+    { 
+        lastactive_stroke_style.classList.remove("active"); 
+    }
+    document.getElementById(buttonclick_stroke_style).classList.add("active");
+    lastactive_stroke_style=document.getElementById(buttonclick_stroke_style);
 }
