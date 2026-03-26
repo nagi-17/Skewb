@@ -198,6 +198,36 @@ function f_mouse_move(event_2) {
         let shape=Object.assign(temp(), {type:"triangle", x1:prev_x, y1:prev_y, x2:curr_x, y2:curr_y, x3:2*prev_x-curr_x, y3:curr_y});
         f_draw_object(shape);
     }
+    else if(selected_button==="eraser"){
+        let eraser_size=f_stroke_width()*2;
+        let eraser_x=curr_x-(eraser_size/2);
+        let eraser_y=curr_y-(eraser_size/2);
+        arr=arr.filter(function(object){
+            return f_erase_object(object, eraser_x, eraser_y, eraser_size)
+        });
+        f_redraw();
+    }
+}
+
+function f_erase_object(object, eraser_x, eraser_y, eraser_size){
+    if(object.type==="brush")
+    {
+        for (let i=0; i<object.points.length; i++)
+        {
+            if(eraser_intersect_point(eraser_x, eraser_y, object.points[i].x, object.points[i].y, eraser_size))
+                return false;
+        }
+        return true;
+    }
+    else
+        return true;
+}
+
+function eraser_intersect_point(left_x, left_y, check_x, check_y, size) {
+    if (check_x>=left_x&&check_x<=(left_x+size)&&check_y>=left_y&&check_y<=(left_y+size))
+        return true;
+    else
+        return false;
 }
 
 function f_stop(event_3) {
