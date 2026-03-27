@@ -154,16 +154,37 @@ function f_draw(event_1) {
     prev_y=event_1.offsetY;
     if(selected_button==="select")
     {
-        console.log("select button clicked");
+        if(selected_shape_index!==-1&&arr[selected_shape_index])
+        {
+            let box=f_select_box(arr[selected_shape_index]);
+            if(box!==null)
+            {
+                active_handle=f_hit_test_handles(prev_x, prev_y, box);
+                if(active_handle!==-1)
+                {
+                    console.log("Test active handle");
+                    move_select=false;
+                    return;
+                }
+            }
+        }
+        //console.log("select button clicked");
         selected_shape_index=f_hit_test(prev_x, prev_y);
         if(selected_shape_index!==-1)
         {
             move_select=true;
+            active_handle=-1;
+        }
+        else
+        {
+            move_select=false;
+            active_handle=-1;
         }
         f_redraw();
         return;
     }
     selected_shape_index=-1;
+    active_handle=-1;
     draw=true;
     if(selected_button==="brush")
     {
@@ -183,6 +204,15 @@ function f_mouse_move(event_2) {
         prev_x=curr_x;
         prev_y=curr_y;
         f_redraw();
+    }
+    else if(selected_button==="select"&&active_handle!==-1&&selected_shape_index!==-1)
+    {
+        let dx=curr_x-prev_x;
+        let dy=curr_y-prev_y;
+        f_resize_selected_object(arr[selected_shape_index], active_handle, dx, dy, curr_x, curr_y);
+        prev_x=curr_x;
+        prev_y=curr_y; f_redraw();
+        return;
     }
     if(!draw)
         return;
@@ -261,7 +291,10 @@ function f_stop(event_3) {
     {
         move_select=false;
     }
-
+    if(active_handle!==-1)
+    {
+        active_handle=-1;
+    }
     if (!draw) return;
     draw=false;
     let curr_x = (event_3 && event_3.offsetX !== undefined) ? event_3.offsetX : prev_x;
@@ -281,7 +314,11 @@ function f_stop(event_3) {
     }
     else if (selected_button==="rectangle")
     {
-        object=Object.assign(temp(), {type:"rectangle", x:prev_x, y:prev_y, w:curr_x-prev_x, h:curr_y-prev_y});
+        let min_x=Math.min(prev_x, curr_x);
+        let min_y=Math.min(prev_y, curr_y);
+        let w=Math.abs(curr_x-prev_x);
+        let h=Math.abs(curr_y-prev_y);
+        object=Object.assign(temp(), {type:"rectangle", x:min_x, y:min_y, w:w, h:h});
     }
     else if (selected_button==="circle")
     {
@@ -413,6 +450,15 @@ function f_draw_select_box(box) {
     ctx.lineWidth=1.5;
     ctx.setLineDash([6, 6]);
     ctx.strokeRect(box.x, box.y, box.w, box.h);
+    ctx.fillStyle="#ffffff";
+    ctx.setLineDash([]);
+    let size=8, half=size/2;
+    let corners=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half}];
+    for(let i of corners)
+    {
+        ctx.fillRect(i.x, i.y, size, size);
+        ctx.strokeRect(i.x, i.y, size, size);
+    }
     ctx.restore();
 }
 
@@ -451,5 +497,70 @@ function f_move_selected_object(object, dx, dy){
         object.y1+=dy;
         object.y2+=dy;
         object.y3+=dy;
+    }
+}
+
+let active_handle=-1;
+function f_hit_test_handles(mouse_x, mouse_y, box)
+{
+    let size=8, half=size/2; let padding_space=4;
+    let handles=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half}];
+    for(let i=0; i<handles.length; i++)
+    {
+        let hx=handles[i].x;
+        let hy=handles[i].y;
+        if(mouse_x>=hx-padding_space&&mouse_x<=hx+size+padding_space&&mouse_y>=hy-padding_space&&mouse_y<=hy+size+padding_space)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function f_resize_selected_object(object, handle, dx, dy, mouse_x, mouse_y) {
+    if (object.type==="rectangle") {
+        if (handle===0)
+        {
+            object.x+=dx;
+            object.y+=dy; 
+            object.w-= dx;
+            object.h-=dy; 
+        } 
+        else if (handle===1)
+        {
+            object.y+=dy; 
+            object.w+=dx;
+            object.h-=dy; 
+        }
+        else if (handle===2)
+        {
+            object.x+=dx; 
+            object.w-=dx;
+            object.h+=dy; 
+        }
+        else if (handle===3)
+        {
+            object.w+=dx;
+            object.h+=dy; 
+        }
+    }
+    else if (object.type==="circle")
+    {
+        object.radius=Math.sqrt(Math.pow(mouse_x-object.cx,2)+Math.pow(mouse_y-object.cy,2));
+    }
+    else if (object.type==="line")
+    {
+        let dist1=Math.pow(mouse_x-object.x1,2)+Math.pow(mouse_y-object.y1,2);
+        let dist2=Math.pow(mouse_x-object.x2,2)+Math.pow(mouse_y-object.y2,2);
+        if (dist1<dist2)
+        {
+            object.x1=mouse_x;
+            object.y1=mouse_y;
+        }
+        else
+        {
+            object.x2=mouse_x;
+            object.y2=mouse_y;
+        }
     }
 }
