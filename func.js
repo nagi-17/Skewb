@@ -151,6 +151,7 @@ function f_redraw(){
         let box=f_select_box(arr[selected_shape_index]);
         f_draw_select_box(box);
     }
+    localStorage.setItem("saved_canvas", JSON.stringify(arr,(key,val)=>key==="img"?val.src:val));
 }
 
 function f_draw(event_1) {
@@ -759,3 +760,17 @@ window.addEventListener("keydown", function(event){
         }
     }
 })
+
+if (localStorage.getItem("saved_canvas")) {
+    arr=JSON.parse(localStorage.getItem("saved_canvas"));
+    arr.forEach(object=>{
+        if (object.type==="image")
+        {
+            let temp_url=object.img;
+            object.img=new Image();
+            object.img.src=temp_url;
+            object.img.onload=f_redraw;
+        }
+    });    
+    f_redraw();
+}
