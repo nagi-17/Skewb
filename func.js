@@ -156,6 +156,10 @@ function f_draw(event_1) {
     {
         console.log("select button clicked");
         selected_shape_index=f_hit_test(prev_x, prev_y);
+        if(selected_shape_index!==-1)
+        {
+            move_select=true;
+        }
         f_redraw();
         return;
     }
@@ -168,11 +172,20 @@ function f_draw(event_1) {
 }
 
 function f_mouse_move(event_2) {
-    if (!draw) return;
-
     let curr_x=event_2.offsetX;
     let curr_y=event_2.offsetY;
 
+    if(selected_button=="select"&&move_select===true&&selected_shape_index!=-1)
+    {
+        let dx=curr_x-prev_x;
+        let dy=curr_y-prev_y;
+        f_move_selected_object(arr[selected_shape_index], dx, dy);
+        prev_x=curr_x;
+        prev_y=curr_y;
+        f_redraw();
+    }
+    if(!draw)
+        return;
     if (selected_button==="brush") {
         current_brush_points.push({x:curr_x, y:curr_y});
         let style=temp();
@@ -244,6 +257,11 @@ function eraser_intersect_point(left_x, left_y, check_x, check_y, size) {
 }
 
 function f_stop(event_3) {
+    if(move_select===true)
+    {
+        move_select=false;
+    }
+
     if (!draw) return;
     draw=false;
     let curr_x = (event_3 && event_3.offsetX !== undefined) ? event_3.offsetX : prev_x;
@@ -396,4 +414,42 @@ function f_draw_select_box(box) {
     ctx.setLineDash([6, 6]);
     ctx.strokeRect(box.x, box.y, box.w, box.h);
     ctx.restore();
+}
+
+let move_select=false;
+function f_move_selected_object(object, dx, dy){
+    if(object.type==="brush")
+    {
+        for(let i=0; i<object.points.length; i++)
+        {
+            object.points[i].x+=dx;
+            object.points[i].y+=dy;
+        }
+    }
+    else if(object.type==="rectangle")
+    {
+        object.x=object.x+dx;
+        object.y+=dy;
+    }
+    else if(object.type==="circle")
+    {
+        object.cx+=dx;
+        object.cy+=dy;
+    }
+    else if(object.type==="line")
+    {
+        object.x1+=dx;
+        object.x2+=dx;
+        object.y1+=dy;
+        object.y2+=dy;
+    }
+    else if(object.type==="triangle")
+    {
+        object.x1+=dx;
+        object.x2+=dx;
+        object.x3+=dx;
+        object.y1+=dy;
+        object.y2+=dy;
+        object.y3+=dy;
+    }
 }
