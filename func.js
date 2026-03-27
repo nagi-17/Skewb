@@ -130,6 +130,10 @@ function f_draw_object(object){
         ctx.closePath();
         ctx.stroke();
     }
+    else if(object.type==="image")
+    {
+        ctx.drawImage(object.img, object.x, object.y, object.w, object.h);
+    }
     console.log("Restore");
     ctx.restore();
 }
@@ -189,6 +193,19 @@ function f_draw(event_1) {
     if(selected_button==="brush")
     {
         current_brush_points=[{x:prev_x, y:prev_y}];
+    }
+    else if (selected_button==="image")
+    {
+        let img_x=prev_x;
+        let img_y=prev_y;
+        let img=new Image();
+        img.src="https://picsum.photos/200/200?random="+Math.random();
+        img.onload=function(){
+            let object=Object.assign(temp(), {type:"image",img:img, x:img_x, y:img_y, w:img.width, h:img.height});
+            arr.push(object);
+            arr_temp=[];
+            f_redraw();
+        } 
     }
 }
 
@@ -427,6 +444,12 @@ function f_select_box(object) {
         }
         return {x:min_x-temp_space, y:min_y-temp_space, w:max_x-min_x+temp_space*2, h:max_y-min_y+temp_space*2};
     }
+    else if(object.type==="image")
+    {
+        let min_x=Math.min(object.x, object.x+object.w);
+        let min_y=Math.min(object.y, object.y+object.h);
+        return { x:min_x-temp_space, y:min_y-temp_space, w:Math.abs(object.w)+temp_space*2, h: Math.abs(object.h)+temp_space*2};
+    }
     return null;
 }
 
@@ -498,6 +521,11 @@ function f_move_selected_object(object, dx, dy){
         object.y2+=dy;
         object.y3+=dy;
     }
+    else if(object.type==="image")
+    {
+        object.x+=dx;
+        object.y+=dy;
+    }
 }
 
 let active_handle=-1;
@@ -563,4 +591,171 @@ function f_resize_selected_object(object, handle, dx, dy, mouse_x, mouse_y) {
             object.y2=mouse_y;
         }
     }
+    else if(object.type==="image")
+    {
+        if (handle===0)
+        {
+            object.x+=dx;
+            object.y+=dy;
+            object.w-=dx;
+            object.h-=dy; 
+        } 
+        else if (handle===1)
+        {
+            object.y+=dy;
+            object.w+=dx;
+            object.h-=dy;
+        } 
+        else if (handle===2){
+            object.x+=dx;
+            object.w-=dx;
+            object.h+=dy;
+        } 
+        else if (handle===3)
+        {
+            object.w+=dx;
+            object.h+=dy;
+        }
+    }
 }
+
+window.addEventListener("keydown", function(event){
+    if(event.key==="Delete"||event.key==="Backspace")
+    {
+        if(selected_button==="select"&&selected_shape_index!==-1)
+        {
+            arr.splice(selected_shape_index, 1);
+            arr_temp=[];
+            selected_shape_index=-1;
+            active_handle=-1;
+            f_redraw();
+        }
+    }
+});
+
+window.addEventListener("keydown", function(event){
+    if(event.ctrlKey&&(event.key==="z"||event.key==="Z"))
+    {
+        f_undo();
+    }
+})
+
+window.addEventListener("keydown", function(event){
+    if(event.ctrlKey&&(event.key==="y"||event.key==="Y"))
+    {
+        f_redo();
+    }
+})
+
+window.addEventListener("keydown", function(event){
+    if((event.key==="s"||event.key==="S"))
+    {
+        let select_btn=document.getElementById("select");    
+        if (selected_button!=="select"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="select";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="b"||event.key==="B"))
+    {
+        let select_btn=document.getElementById("brush");    
+        if (selected_button!=="brush"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="brush";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="e"||event.key==="E"))
+    {
+        let select_btn=document.getElementById("eraser");    
+        if (selected_button!=="eraser"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="eraser";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="l"||event.key==="l"))
+    {
+        let select_btn=document.getElementById("line");    
+        if (selected_button!=="line"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="line";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="r"||event.key==="R"))
+    {
+       let select_btn=document.getElementById("rectangle");    
+        if (selected_button!=="rectangle"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="rectangle";
+        } 
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="c"||event.key==="C"))
+    {
+        let select_btn=document.getElementById("circle");    
+        if (selected_button!=="circle"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="circle";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="t"||event.key==="T"))
+    {
+        let select_btn=document.getElementById("triangle");    
+        if (selected_button!=="triangle"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="triangle";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if((event.key==="i"||event.key==="I"))
+    {
+        let select_btn=document.getElementById("image");    
+        if (selected_button!=="image"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="image";
+        }
+    }
+})
