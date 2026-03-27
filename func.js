@@ -142,12 +142,25 @@ function f_redraw(){
     {
         f_draw_object(arr[i]);
     }
+    if(selected_shape_index!==-1&&arr[selected_shape_index])
+    {
+        let box=f_select_box(arr[selected_shape_index]);
+        f_draw_select_box(box);
+    }
 }
 
 function f_draw(event_1) {
-    draw=true;
     prev_x=event_1.offsetX;
     prev_y=event_1.offsetY;
+    if(selected_button==="select")
+    {
+        console.log("select button clicked");
+        selected_shape_index=f_hit_test(prev_x, prev_y);
+        f_redraw();
+        return;
+    }
+    selected_shape_index=-1;
+    draw=true;
     if(selected_button==="brush")
     {
         current_brush_points=[{x:prev_x, y:prev_y}];
@@ -310,4 +323,77 @@ function f_active_stroke_style(event) {
     }
     document.getElementById(buttonclick_stroke_style).classList.add("active");
     lastactive_stroke_style=document.getElementById(buttonclick_stroke_style);
+}
+
+let selected_shape_index=-1;
+
+function f_select_box(object) {
+    let temp_space=6;
+    if (object.type==="rectangle")
+    {
+        let min_x=Math.min(object.x, object.x+object.w);
+        let min_y=Math.min(object.y, object.y+object.h);
+        return { x:min_x-temp_space, y:min_y-temp_space, w:Math.abs(object.w)+temp_space*2, h: Math.abs(object.h)+temp_space*2};
+    } 
+    else if (object.type==="circle")
+    {
+        return { x:object.cx-object.radius-temp_space, y:object.cy-object.radius-temp_space, w:object.radius*2+temp_space*2, h:object.radius*2+temp_space*2};
+    } 
+    else if (object.type==="line")
+    {
+        let min_x=Math.min(object.x1, object.x2);
+        let max_x=Math.max(object.x1, object.x2);
+        let min_y=Math.min(object.y1, object.y2);
+        let max_y=Math.max(object.y1, object.y2);
+        return { x:min_x-temp_space, y:min_y-temp_space, w:max_x-min_x+temp_space*2, h:max_y-min_y+temp_space*2};
+    } 
+    else if (object.type==="triangle")
+    {
+        let min_x=Math.min(object.x1, object.x2, object.x3);
+        let max_x=Math.max(object.x1, object.x2, object.x3);
+        let min_y=Math.min(object.y1, object.y2, object.y3);
+        let max_y=Math.max(object.y1, object.y2, object.y3);
+        return { x:min_x-temp_space, y: min_y-temp_space, w:max_x-min_x+temp_space*2, h:max_y-min_y+temp_space*2};
+    } 
+    else if (object.type==="brush") {
+        if (object.points.length===0) 
+            return null;
+        let min_x=object.points[0].x, max_x=object.points[0].x;
+        let min_y=object.points[0].y, max_y=object.points[0].y;
+        for (let i=1; i<object.points.length; i++) {
+            if (object.points[i].x<min_x) 
+                min_x=object.points[i].x;
+            if (object.points[i].x>max_x) 
+                max_x=object.points[i].x;
+            if (object.points[i].y<min_y) 
+                min_y=object.points[i].y;
+            if (object.points[i].y>max_y) 
+                max_y=object.points[i].y;
+        }
+        return {x:min_x-temp_space, y:min_y-temp_space, w:max_x-min_x+temp_space*2, h:max_y-min_y+temp_space*2};
+    }
+    return null;
+}
+
+function f_hit_test(mouse_x, mouse_y){
+    for (let i=arr.length-1; i>=0; i--) 
+    {
+        let box=f_select_box(arr[i]);
+        if (box&&mouse_x>=box.x&&mouse_x<=box.x+box.w&&mouse_y>=box.y&&mouse_y<=box.y+box.h) 
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function f_draw_select_box(box) {
+    if (!box) 
+        return;
+    ctx.save();
+    ctx.strokeStyle="#00a8ff";
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.strokeRect(box.x, box.y, box.w, box.h);
+    ctx.restore();
 }
