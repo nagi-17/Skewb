@@ -908,7 +908,19 @@ function f_touch_start(e)
     }
 }
 function f_touch_move(e){e.preventDefault();f_mouse_move(f_get_touch(e));}
-function f_touch_end(e){e.preventDefault(); f_stop(null);}
+function f_touch_end(e){
+    e.preventDefault();
+    let fake_event=null;
+    if(e.changedTouches&&e.changedTouches.length>0)
+    {
+        let rect=canvas.getBoundingClientRect();
+        fake_event={
+            offsetX: e.changedTouches[0].clientX-rect.left,
+            offsetY: e.changedTouches[0].clientY-rect.top
+        }
+    }
+    f_stop(fake_event);
+}
 
 document.getElementById("delete-button").addEventListener("click", function() {
     if (selected_button==="select"&&selected_shape_index!==-1)
