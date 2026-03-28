@@ -48,7 +48,7 @@ function f_resize() {
 window.addEventListener("load", f_resize);
 window.addEventListener("resize", f_resize);
 
-let draw=false;
+let draw=false, typing=false, f_commit_text=null;
 let prev_x, prev_y;
 let arr=[], arr_temp=[], current_brush_points=[];
 
@@ -134,6 +134,13 @@ function f_draw_object(object){
     {
         ctx.drawImage(object.img, object.x, object.y, object.w, object.h);
     }
+    else if(object.type==="text")
+    {
+        ctx.font=object.size+"px sans-serif";
+        ctx.fillStyle=object.stroke_color;
+        ctx.textBaseline="top";
+        ctx.fillText(object.text, object.x, object.y);
+    }
     console.log("Restore");
     ctx.restore();
 }
@@ -155,6 +162,10 @@ function f_redraw(){
 }
 
 function f_draw(event_1) {
+    if(typing&&f_commit_text)
+    {
+        f_commit_text(true);
+    }
     prev_x=event_1.offsetX;
     prev_y=event_1.offsetY;
     if(selected_button==="select")
@@ -207,6 +218,44 @@ function f_draw(event_1) {
             arr_temp=[];
             f_redraw();
         } 
+    }
+    else if(selected_button==="text")
+    {
+        let font_size_text=Math.max(16, parseInt(f_stroke_width())*3);
+        let active_text={x: prev_x, y: prev_y, size: font_size_text, color: f_stroke_color(), val: ""};
+
+        function f_commit_text_internal(commit) {
+            if(commit && active_text.val.trim()) {
+                let object=Object.assign(temp(), {type:"text", text:active_text.val.trim(), x:active_text.x, y:active_text.y, size:active_text.size});
+                arr.push(object);
+                arr_temp=[];
+            }
+            typing=false;
+            f_commit_text=null;
+            f_redraw();
+            window.removeEventListener("keydown", f_keydown);
+        }
+        function f_keydown(e) {
+            e.stopPropagation();
+            if(e.key==="Enter"||e.key==="Escape") { f_commit_text_internal(true); return; }
+            if(e.key==="Backspace") { active_text.val=active_text.val.slice(0, -1); }
+            else if(e.key.length===1) { active_text.val+=e.key; }
+            f_redraw();
+            ctx.save();
+            ctx.font=active_text.size+"px sans-serif";
+            ctx.fillStyle=active_text.color;
+            ctx.textBaseline="top";
+            ctx.fillText(active_text.val+"|", active_text.x, active_text.y);
+            let m=ctx.measureText(active_text.val);
+            ctx.strokeStyle="#00a8ff";
+            ctx.lineWidth=1;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(active_text.x-3, active_text.y-3, m.width+16, active_text.size+6);
+            ctx.restore();
+        }
+        f_commit_text=f_commit_text_internal;
+        window.addEventListener("keydown", f_keydown);
+        typing=true;
     }
 }
 
@@ -451,6 +500,14 @@ function f_select_box(object) {
         let min_y=Math.min(object.y, object.y+object.h);
         return { x:min_x-temp_space, y:min_y-temp_space, w:Math.abs(object.w)+temp_space*2, h: Math.abs(object.h)+temp_space*2};
     }
+    else if(object.type==="text")
+    {
+        ctx.font=object.size+"px sans-serif";
+        let metrics=ctx.measureText(object.text);
+        let w=metrics.width;
+        let h=(metrics.actualBoundingBoxAscent+metrics.actualBoundingBoxDescent)||object.size;
+        return { x:object.x-temp_space, y:object.y-temp_space, w:w+temp_space*2, h:h+temp_space*2}
+    }
     return null;
 }
 
@@ -523,6 +580,11 @@ function f_move_selected_object(object, dx, dy){
         object.y3+=dy;
     }
     else if(object.type==="image")
+    {
+        object.x+=dx;
+        object.y+=dy;
+    }
+    else if(object.type==="text")
     {
         object.x+=dx;
         object.y+=dy;
@@ -618,15 +680,39 @@ function f_resize_selected_object(object, handle, dx, dy, mouse_x, mouse_y) {
             object.h+=dy;
         }
     }
+    else if(object.type==="text")
+    {
+        if(handle===0)
+        {
+            object.x+=dx;
+            object.y+=dy;
+            object.size=Math.max(8, object.size-dy);
+        }
+        else if(handle===1)
+        {
+            object.y+=dy;
+            object.size=Math.max(8, object.size-dy);
+        }
+        else if(handle===2)
+        {
+            object.x+=dx;
+            object.size=Math.max(8, object.size+dy);
+        }
+        else if(handle===3)
+        {
+            object.size=Math.max(8, object.size+dy);
+        }
+    }
 }
 
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if(event.key==="Delete"||event.key==="Backspace")
     {
         if(selected_button==="select"&&selected_shape_index!==-1)
         {
-            arr.splice(selected_shape_index, 1);
-            arr_temp=[];
+            let rem=arr.splice(selected_shape_index, 1);
+            arr_temp.push(rem[0]);
             selected_shape_index=-1;
             active_handle=-1;
             f_redraw();
@@ -635,6 +721,7 @@ window.addEventListener("keydown", function(event){
 });
 
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if(event.ctrlKey&&(event.key==="z"||event.key==="Z"))
     {
         f_undo();
@@ -642,6 +729,7 @@ window.addEventListener("keydown", function(event){
 })
 
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if(event.ctrlKey&&(event.key==="y"||event.key==="Y"))
     {
         f_redo();
@@ -649,6 +737,7 @@ window.addEventListener("keydown", function(event){
 })
 
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="s"||event.key==="S"))
     {
         let select_btn=document.getElementById("select");    
@@ -663,6 +752,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="b"||event.key==="B"))
     {
         let select_btn=document.getElementById("brush");    
@@ -677,6 +767,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="e"||event.key==="E"))
     {
         let select_btn=document.getElementById("eraser");    
@@ -691,6 +782,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="l"||event.key==="l"))
     {
         let select_btn=document.getElementById("line");    
@@ -705,6 +797,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="r"||event.key==="R"))
     {
        let select_btn=document.getElementById("rectangle");    
@@ -719,6 +812,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="c"||event.key==="C"))
     {
         let select_btn=document.getElementById("circle");    
@@ -733,6 +827,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="t"||event.key==="T"))
     {
         let select_btn=document.getElementById("triangle");    
@@ -747,6 +842,7 @@ window.addEventListener("keydown", function(event){
     }
 })
 window.addEventListener("keydown", function(event){
+    if(typing) return;
     if((event.key==="i"||event.key==="I"))
     {
         let select_btn=document.getElementById("image");    
