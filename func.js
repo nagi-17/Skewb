@@ -870,3 +870,16 @@ if (localStorage.getItem("saved_canvas")) {
     });    
     f_redraw();
 }
+
+canvas.addEventListener("touchstart",f_touch_start,{passive:false});
+canvas.addEventListener("touchmove",f_touch_move,{passive:false});
+canvas.addEventListener("touchend",f_touch_end,{passive:false});
+
+function f_get_touch(event)
+{
+    let rect=canvas.getBoundingClientRect();
+    return {offsetX: event.touches[0].clientX-rect.left,offsetY: event.touches[0].clientY-rect.top};
+}
+function f_touch_start(e){e.preventDefault();f_draw(f_get_touch(e));}
+function f_touch_move(e){e.preventDefault();f_mouse_move(f_get_touch(e));}
+function f_touch_end(e){e.preventDefault(); f_stop(null);}
