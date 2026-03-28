@@ -20,7 +20,7 @@ themetoggle.addEventListener("click", function () {
 
 let selected_button="select";
 let lastactive=document.getElementById("select");
-let button=document.querySelectorAll(".draw-tools");
+let button=document.querySelectorAll(".draw-tools button");
 
 for (let btn of button) {
     btn.addEventListener("click", f_active);
@@ -141,7 +141,7 @@ function f_draw_object(object){
         ctx.textBaseline="top";
         ctx.fillText(object.text, object.x, object.y);
     }
-    console.log("Restore");
+    //console.log("Restore");
     ctx.restore();
 }
 
@@ -178,7 +178,7 @@ function f_draw(event_1) {
                 active_handle=f_hit_test_handles(prev_x, prev_y, box);
                 if(active_handle!==-1)
                 {
-                    console.log("Test active handle");
+                    //console.log("Test active handle");
                     move_select=false;
                     return;
                 }
@@ -211,6 +211,7 @@ function f_draw(event_1) {
         let img_x=prev_x;
         let img_y=prev_y;
         let img=new Image();
+        img.crossOrigin="anonymous";
         img.src="https://picsum.photos/200/200?random="+Math.random();
         img.onload=function(){
             let object=Object.assign(temp(), {type:"image",img:img, x:img_x, y:img_y, w:img.width, h:img.height});
@@ -431,7 +432,7 @@ function f_redo(){
 
 let selected_button_stroke_style="style-solid";
 let lastactive_stroke_style=document.getElementById("style-solid");
-let button_stroke_style=document.querySelectorAll(".style-buttons");
+let button_stroke_style=document.querySelectorAll(".style-buttons button");
 
 for (let btn of button_stroke_style) {
     btn.addEventListener("click", f_active_stroke_style);
@@ -718,6 +719,7 @@ window.addEventListener("keydown", function(event){
             f_redraw();
         }
     }
+    event.preventDefault();
 });
 
 window.addEventListener("keydown", function(event){
@@ -726,6 +728,7 @@ window.addEventListener("keydown", function(event){
     {
         f_undo();
     }
+    event.preventDefault();
 })
 
 window.addEventListener("keydown", function(event){
@@ -734,6 +737,7 @@ window.addEventListener("keydown", function(event){
     {
         f_redo();
     }
+    event.preventDefault();
 })
 
 window.addEventListener("keydown", function(event){
@@ -783,7 +787,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="l"||event.key==="l"))
+    if((event.key==="l"||event.key==="L"))
     {
         let select_btn=document.getElementById("line");    
         if (selected_button!=="line"&&select_btn) {
@@ -880,6 +884,39 @@ function f_get_touch(event)
     let rect=canvas.getBoundingClientRect();
     return {offsetX: event.touches[0].clientX-rect.left,offsetY: event.touches[0].clientY-rect.top};
 }
-function f_touch_start(e){e.preventDefault();f_draw(f_get_touch(e));}
+function f_touch_start(e)
+{
+    if (selected_button!=="text")
+    {
+        e.preventDefault(); 
+    }
+    f_draw(f_get_touch(e));
+    if (selected_button==="text")
+    {
+        let mobile_text=prompt("Enter your text:", "");
+        if (mobile_text)
+        {
+            for (let i=0; i<mobile_text.length; i++) {
+                window.dispatchEvent(new KeyboardEvent("keydown", { key: mobile_text[i]}));
+            }
+            window.dispatchEvent(new KeyboardEvent("keydown", { key:"Enter"}));
+        }
+        else
+        {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key:"Escape"}));
+        }
+    }
+}
 function f_touch_move(e){e.preventDefault();f_mouse_move(f_get_touch(e));}
 function f_touch_end(e){e.preventDefault(); f_stop(null);}
+
+document.getElementById("delete-button").addEventListener("click", function() {
+    if (selected_button==="select"&&selected_shape_index!==-1)
+    {
+        let remove=arr.splice(selected_shape_index, 1);
+        arr_temp.push(remove[0]);
+        selected_shape_index=-1;
+        active_handle=-1;
+        f_redraw();
+    }
+});
