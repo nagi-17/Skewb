@@ -52,9 +52,37 @@
 
     </div>
 
+    <div id="mobile-overlay"></div>
+    <div id="mobile-drawer">
+        <div id="drawer-handle"></div>
+        <div class="drawer-body">
+            <div class="drawer-row">
+                <label>COLOR</label>
+                <input type="color" id="m-color" value="#000000">
+            </div>
+            <div class="drawer-row">
+                <label>WIDTH <span id="m-width-val">5</span></label>
+                <input type="range" id="m-width" min="1" max="50" value="5">
+            </div>
+            <div class="drawer-row">
+                <label>OPACITY <span id="m-opacity-val">100%</span></label>
+                <input type="range" id="m-opacity" min="0" max="1" step="0.1" value="1">
+            </div>
+            <div class="drawer-row">
+                <label>STROKE STYLE</label>
+                <div class="style-buttons">
+                    <button id="m-style-solid" class="active">Solid</button>
+                    <button id="m-style-dashed">Dashed</button>
+                    <button id="m-style-dotted">Dotted</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer id="bottom-bar">
         <div class="controls">
             <button id="theme">Toggle Dark Mode</button>
+            <button id="style-toggle" class="mobile-only">Style</button>
             <button id="undo">Undo</button>
             <button id="redo">Redo</button>
             <button id="clear">Clear Canvas</button>
