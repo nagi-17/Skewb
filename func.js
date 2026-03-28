@@ -257,6 +257,18 @@ function f_draw(event_1) {
         f_commit_text=f_commit_text_internal;
         window.addEventListener("keydown", f_keydown);
         typing=true;
+        f_redraw();
+        ctx.save();
+        ctx.font = active_text.size+"px sans-serif";
+        ctx.fillStyle=active_text.color;
+        ctx.textBaseline="top";
+        ctx.fillText(active_text.val+"|", active_text.x, active_text.y);
+        let m=ctx.measureText(active_text.val);
+        ctx.strokeStyle="#00a8ff";
+        ctx.lineWidth=1;
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(active_text.x-3,active_text.y-3,m.width+16,active_text.size+6);
+        ctx.restore();
     }
 }
 
@@ -286,16 +298,9 @@ function f_mouse_move(event_2) {
         return;
     if (selected_button==="brush") {
         current_brush_points.push({x:curr_x, y:curr_y});
-        let style=temp();
-        ctx.save();
-        f_style(style);
-        ctx.beginPath();
-        let temp_points=current_brush_points;
-        let temp_length=temp_points.length;
-        ctx.moveTo(temp_points[temp_length-2].x, temp_points[temp_length-2].y);
-        ctx.lineTo(temp_points[temp_length-1].x, temp_points[temp_length-1].y);
-        ctx.stroke();
-        ctx.restore();
+        f_redraw();
+        let shape=Object.assign(temp(), {type:"brush", points:current_brush_points});
+        f_draw_object(shape);
     }
 
     else if (selected_button==="line") {
@@ -610,7 +615,64 @@ function f_hit_test_handles(mouse_x, mouse_y, box)
 }
 
 function f_resize_selected_object(object, handle, dx, dy, mouse_x, mouse_y) {
-    if (object.type==="rectangle") {
+    if(object.type==="brush")
+    {
+        if(object.points.length===0)
+             return;
+        
+        let min_x=object.points[0].x, max_x=object.points[0].x;
+        let min_y=object.points[0].y, max_y=object.points[0].y;
+        for (let i=0; i<object.points.length; i++)
+        {
+            if(object.points[i].x<min_x)
+                min_x=object.points[i].x;
+            if(object.points[i].x>max_x)
+                max_x=object.points[i].x;
+            if(object.points[i].y<min_y)
+                min_y=object.points[i].y;
+            if(object.points[i].y>max_y)
+                max_y=object.points[i].y;
+        }
+        let old_w=max_x-min_x, old_h=max_y-min_y;
+        if(old_w===0)
+            old_w=0.1;
+        if(old_h===0)
+            old_h=0.1;
+
+        let scale_x=1, scale_y=1;
+        let new_min_x=min_x, new_min_y=min_y;    
+
+        if(handle===0)
+        {
+            new_min_x+=dx; 
+            new_min_y+=dy;
+            scale_x=(max_x-new_min_x)/old_w;
+            scale_y=(max_y-new_min_y)/old_h;
+        }
+        else if(handle===1)
+        {
+            new_min_y+=dy;
+            scale_x=(max_x+dx-min_x)/old_w;
+            scale_y=(max_y-new_min_y)/old_h;
+        }
+        else if(handle===2)
+        {
+            new_min_x+=dx;
+            scale_x=(max_x-new_min_x)/old_w;
+            scale_y=(max_y+dy-min_y)/old_h;
+        }
+        else if(handle===3)
+        {
+            scale_x=(max_x+dx-min_x)/old_w;
+            scale_y=(max_y+dy-min_y)/old_h;
+        }
+        for(let i=0; i<object.points.length; i++)
+        {
+            object.points[i].x=new_min_x+(object.points[i].x-min_x)*scale_x;
+            object.points[i].y=new_min_y+(object.points[i].y-min_y)*scale_y;
+        }
+    }
+    else if (object.type==="rectangle") {
         if (handle===0)
         {
             object.x+=dx;
