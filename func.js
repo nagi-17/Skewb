@@ -886,10 +886,9 @@ function f_get_touch(event)
 }
 function f_touch_start(e)
 {
-    if (selected_button!=="text")
-    {
-        e.preventDefault(); 
-    }
+    if(e.points.length>1)
+        return;
+    e.preventDefault();
     f_draw(f_get_touch(e));
     if (selected_button==="text")
     {
@@ -907,8 +906,48 @@ function f_touch_start(e)
         }
     }
 }
-function f_touch_move(e){e.preventDefault();f_mouse_move(f_get_touch(e));}
+function f_touch_move(e){
+    if(e.points.length>1)
+        return;
+    e.preventDefault()
+    f_mouse_move(f_get_touch(e));
+}
 function f_touch_end(e){e.preventDefault(); f_stop(null);}
+
+const mobile_draw=document.getElementById("mobile-drawer");
+const mobile_overlay=document.getElementById("mobile-overlay");
+document.getElementById("style-toggle").addEventListener("click", function() {
+    document.getElementById("m-color").value=document.getElementById("stroke-color").value;
+    document.getElementById("m-width").value=document.getElementById("stroke-width").value;
+    document.getElementById("m-opacity").value=document.getElementById("opacity").value;
+    mobile_draw.classList.add("open");
+    mobile_overlay.classList.add("open");
+});
+mobile_overlay.addEventListener("click", function() {
+    mobile_draw.classList.remove("open");
+    mobile_overlay.classList.remove("open");
+});
+document.getElementById("m-color").addEventListener("input", function() {
+    document.getElementById("stroke-color").value=this.value;
+});
+document.getElementById("m-width").addEventListener("input", function() {
+    document.getElementById("stroke-width").value=this.value;
+    document.getElementById("m-width-val").textContent=this.value;
+});
+document.getElementById("m-opacity").addEventListener("input", function() {
+    document.getElementById("opacity").value=this.value;
+    document.getElementById("m-opacity-val").textContent=Math.round(this.value*100)+"%";
+});
+let m_last_style=document.getElementById("m-style-solid");
+["m-style-solid","m-style-dashed","m-style-dotted"].forEach(function(id) {
+    document.getElementById(id).addEventListener("click", function() {
+        m_last_style.classList.remove("active");
+        m_last_style.classList.add("active");
+        let desktop=id.replace("m-","");
+        document.querySelectorAll(".property-group .style-buttons button").forEach(b=>b.classList.remove("active"));
+        document.getElementById(desktop).classList.add("active");
+    });
+});
 
 document.getElementById("delete-button").addEventListener("click", function() {
     if (selected_button==="select"&&selected_shape_index!==-1)
