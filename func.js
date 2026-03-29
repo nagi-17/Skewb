@@ -1105,3 +1105,7 @@ document.getElementById("delete-button").addEventListener("click", function() {
         f_redraw();
     }
 });
+
+document.getElementById("mobile-settings").addEventListener("click", function() {
+    document.getElementById("properties-panel").classList.toggle("show");
+});
