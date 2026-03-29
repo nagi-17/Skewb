@@ -86,6 +86,7 @@ body.dark-mode button.active {
   display: flex;
   flex: 1;
   overflow: hidden;
+  flex-direction: row-reverse;
 }
 
 #canvas-container {
