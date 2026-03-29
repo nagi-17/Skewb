@@ -47,6 +47,10 @@ body.dark-mode #top-bar {
 }
 
 button {
+  position:relative;
+  display:flex;
+  align-items: centre;
+  gap: 0.375rem;
   padding: 0.375rem 0.75rem;
   border: 1px solid #ccc;
   border-radius: 0.3125rem;
@@ -55,6 +59,16 @@ button {
   cursor: pointer;
   font-size: 0.75rem;
   transition: background 0.5s;
+}
+
+.shortcut {
+  position: absolute;
+  bottom: 0.125rem;
+  right: 0.25rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #888;
+  pointer-events:none
 }
 
 button:hover {
@@ -72,6 +86,11 @@ body.dark-mode button {
   color: #eee;
   border-color: #555;
 }
+
+body.dark-mode .shortcut {
+  color: #eee;
+}
+
 
 body.dark-mode button:hover {
   background: #696969;
