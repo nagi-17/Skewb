@@ -35,6 +35,15 @@ function f_active(event) {
     document.getElementById(buttonclick).classList.add("active");
     lastactive=document.getElementById(buttonclick);
     selected_button=buttonclick;
+    if (selected_button==="select" || selected_button==="eraser") {
+        canvas.style.cursor="pointer";
+    }
+    else if (selected_button==="text") {
+        canvas.style.cursor="text";
+    }
+    else {
+        canvas.style.cursor = "crosshair";
+    }
 }
 
 const canvas=document.getElementById("drawing-board");
@@ -80,7 +89,7 @@ function f_style(object) {
 }
 
 function temp(){
-    return {stroke_color:f_stroke_color(), stroke_width:f_stroke_width(), opacity:f_opacity(), stroke_style:f_stroke_style()}
+    return {stroke_color:f_stroke_color(), stroke_width:f_stroke_width(), opacity:f_opacity(), stroke_style:f_stroke_style(), angle:0}
 }
 
 canvas.addEventListener("mousedown",f_draw);
@@ -91,6 +100,14 @@ canvas.addEventListener("mouseleave",f_stop);
 function f_draw_object(object){
     ctx.save();
     f_style(object);
+    let box = f_select_box(object);
+    if (box&&object.angle) {
+        let cx=box.x+box.w/2;
+        let cy=box.y+box.h/2;
+        ctx.translate(cx, cy);
+        ctx.rotate(object.angle);
+        ctx.translate(-cx, -cy);
+    }
     ctx.beginPath();
     if (object.type==="brush")
     {
@@ -156,7 +173,7 @@ function f_redraw(){
     if(selected_shape_index!==-1&&arr[selected_shape_index])
     {
         let box=f_select_box(arr[selected_shape_index]);
-        f_draw_select_box(box);
+        f_draw_select_box(box, arr[selected_shape_index]);
     }
     localStorage.setItem("saved_canvas", JSON.stringify(arr,(key,val)=>key==="img"?val.src:val));
 }
@@ -175,7 +192,7 @@ function f_draw(event_1) {
             let box=f_select_box(arr[selected_shape_index]);
             if(box!==null)
             {
-                active_handle=f_hit_test_handles(prev_x, prev_y, box);
+                active_handle=f_hit_test_handles(prev_x, prev_y, box,arr[selected_shape_index]);
                 if(active_handle!==-1)
                 {
                     //console.log("Test active handle");
@@ -289,7 +306,16 @@ function f_mouse_move(event_2) {
     {
         let dx=curr_x-prev_x;
         let dy=curr_y-prev_y;
-        f_resize_selected_object(arr[selected_shape_index], active_handle, dx, dy, curr_x, curr_y);
+        let object=arr[selected_shape_index];
+        if (active_handle===4)
+        {
+            let box=f_select_box(object);
+            let cx=box.x+box.w/2;
+            let cy=box.y+box.h/2;
+            object.angle=Math.atan2(curr_y-cy, curr_x-cx)+(Math.PI/2);
+        }
+        else
+            f_resize_selected_object(arr[selected_shape_index], active_handle, dx, dy, curr_x, curr_y);
         prev_x=curr_x;
         prev_y=curr_y; f_redraw();
         return;
@@ -529,22 +555,44 @@ function f_hit_test(mouse_x, mouse_y){
     return -1;
 }
 
-function f_draw_select_box(box) {
+function f_draw_select_box(box, object) {
     if (!box) 
         return;
     ctx.save();
+    let cx=box.x+box.w/2;
+    let cy=box.y+box.h/2;
+    if (object&&object.angle)
+    {
+        ctx.translate(cx, cy);
+        ctx.rotate(object.angle);
+        ctx.translate(-cx, -cy);
+    }
     ctx.strokeStyle="#00a8ff";
     ctx.lineWidth=1.5;
     ctx.setLineDash([6, 6]);
     ctx.strokeRect(box.x, box.y, box.w, box.h);
+    ctx.beginPath();
+    ctx.moveTo(cx, box.y);
+    ctx.lineTo(cx, box.y-25);
+    ctx.stroke();
     ctx.fillStyle="#ffffff";
     ctx.setLineDash([]);
     let size=8, half=size/2;
-    let corners=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half}];
+    let corners=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half}, {x:cx-half, y:box.y-25-half}];
     for(let i of corners)
     {
-        ctx.fillRect(i.x, i.y, size, size);
-        ctx.strokeRect(i.x, i.y, size, size);
+        if(i===4)
+        {
+            ctx.beginPath();
+            ctx.arc(corners[i].x+half, corners[i].y+half, half, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+        }
+        else
+        {
+            ctx.fillRect(i.x, i.y, size, size);
+            ctx.strokeRect(i.x, i.y, size, size);
+        }
     }
     ctx.restore();
 }
@@ -598,15 +646,24 @@ function f_move_selected_object(object, dx, dy){
 }
 
 let active_handle=-1;
-function f_hit_test_handles(mouse_x, mouse_y, box)
+function f_hit_test_handles(mouse_x, mouse_y, box, object)
 {
     let size=8, half=size/2; let padding_space=4;
-    let handles=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half}];
+    let angle=0;
+    let cx=box.x+box.w/2;
+    let cy=box.y+box.h/2;
+    if(object&&object.angle)
+    {
+        angle=object.angle;
+    }
+    let rotated_mouse_x=Math.cos(-angle)*(mouse_x-cx)-Math.sin(-angle)*(mouse_y-cy)+cx;
+    let rotated_mouse_y=Math.sin(-angle)*(mouse_x-cx)+Math.cos(-angle)*(mouse_y-cy)+cy;
+    let handles=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half},{x:cx-half, y:box.y-25-half}];
     for(let i=0; i<handles.length; i++)
     {
         let hx=handles[i].x;
         let hy=handles[i].y;
-        if(mouse_x>=hx-padding_space&&mouse_x<=hx+size+padding_space&&mouse_y>=hy-padding_space&&mouse_y<=hy+size+padding_space)
+        if(rotated_mouse_x>=hx-padding_space&&rotated_mouse_x<=hx+size+padding_space&&rotated_mouse_y>=hy-padding_space&&rotated_mouse_y<=hy+size+padding_space)
         {
             return i;
         }
@@ -717,6 +774,51 @@ function f_resize_selected_object(object, handle, dx, dy, mouse_x, mouse_y) {
             object.y2=mouse_y;
         }
     }
+    else if(object.type==="triangle")
+    {
+        let min_x=Math.min(object.x1, object.x2, object.x3);
+        let max_x=Math.max(object.x1, object.x2, object.x3);
+        let min_y=Math.min(object.y1, object.y2, object.y3);
+        let max_y=Math.max(object.y1, object.y2, object.y3);
+        let old_w=max_x-min_x;
+        let old_h=max_y-min_y;
+        if(old_w===0)
+            old_w=0.1;
+        if(old_h===0)
+            old_h=0.1;
+        let scale_x=1, scale_y=1;
+        let new_min_x=min_x, new_min_y=min_y;
+        if(handle===0)
+        {
+            new_min_x+=dx; 
+            new_min_y+=dy;
+            scale_x=(max_x-new_min_x)/old_w;
+            scale_y=(max_y-new_min_y)/old_h;
+        }
+        else if(handle===1)
+        {
+            new_min_y+=dy;
+            scale_x=(max_x+dx-min_x)/old_w;
+            scale_y=(max_y-new_min_y)/old_h;
+        }
+        else if(handle===2)
+        {
+            new_min_x+=dx;
+            scale_x=(max_x-new_min_x)/old_w;
+            scale_y=(max_y+dy-min_y)/old_h;
+        }
+        else if(handle===3)
+        {
+            scale_x=(max_x+dx-min_x)/old_w;
+            scale_y=(max_y+dy-min_y)/old_h;
+        }
+        object.x1=new_min_x+(object.x1-min_x)*scale_x;
+        object.y1=new_min_y+(object.y1-min_y)*scale_y;
+        object.x2=new_min_x+(object.x2-min_x)*scale_x;
+        object.y2=new_min_y+(object.y2-min_y)*scale_y;
+        object.x3=new_min_x+(object.x3-min_x)*scale_x;
+        object.y3=new_min_y+(object.y3-min_y)*scale_y;
+    }
     else if(object.type==="image")
     {
         if (handle===0)
@@ -814,6 +916,7 @@ window.addEventListener("keydown", function(event){
             select_btn.classList.add("active");
             lastactive=select_btn;
             selected_button="select";
+            canvas.style.cursor="pointer";
         }
     }
 })
@@ -844,6 +947,7 @@ window.addEventListener("keydown", function(event){
             select_btn.classList.add("active");
             lastactive=select_btn;
             selected_button="eraser";
+            canvas.style.cursor="pointer";
         }
     }
 })
