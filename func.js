@@ -27,7 +27,7 @@ for (let btn of button) {
 }
 
 function f_active(event) {
-    let buttonclick=event.target.id;
+    let buttonclick=event.currentTarget.id;
     if (lastactive) 
     { 
         lastactive.classList.remove("active"); 
@@ -911,7 +911,7 @@ window.addEventListener("keydown", function(event){
 
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="s"||event.key==="S"))
+    if((event.key==="1"))
     {
         let select_btn=document.getElementById("select");    
         if (selected_button!=="select"&&select_btn) {
@@ -927,7 +927,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="b"||event.key==="B"))
+    if((event.key==="2"))
     {
         let select_btn=document.getElementById("brush");    
         if (selected_button!=="brush"&&select_btn) {
@@ -942,7 +942,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="e"||event.key==="E"))
+    if((event.key==="3"))
     {
         let select_btn=document.getElementById("eraser");    
         if (selected_button!=="eraser"&&select_btn) {
@@ -958,7 +958,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="l"||event.key==="L"))
+    if((event.key==="4"))
     {
         let select_btn=document.getElementById("line");    
         if (selected_button!=="line"&&select_btn) {
@@ -973,7 +973,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="r"||event.key==="R"))
+    if((event.key==="5"))
     {
        let select_btn=document.getElementById("rectangle");    
         if (selected_button!=="rectangle"&&select_btn) {
@@ -988,7 +988,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="c"||event.key==="C"))
+    if((event.key==="6"))
     {
         let select_btn=document.getElementById("circle");    
         if (selected_button!=="circle"&&select_btn) {
@@ -1003,7 +1003,7 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="t"||event.key==="T"))
+    if((event.key==="7"))
     {
         let select_btn=document.getElementById("triangle");    
         if (selected_button!=="triangle"&&select_btn) {
@@ -1018,7 +1018,22 @@ window.addEventListener("keydown", function(event){
 })
 window.addEventListener("keydown", function(event){
     if(typing) return;
-    if((event.key==="i"||event.key==="I"))
+    if((event.key==="8"))
+    {
+        let select_btn=document.getElementById("text");    
+        if (selected_button!=="text"&&select_btn) {
+            if (lastactive) {
+                lastactive.classList.remove("active");
+            }
+            select_btn.classList.add("active");
+            lastactive=select_btn;
+            selected_button="text";
+        }
+    }
+})
+window.addEventListener("keydown", function(event){
+    if(typing) return;
+    if((event.key==="9"))
     {
         let select_btn=document.getElementById("image");    
         if (selected_button!=="image"&&select_btn) {
