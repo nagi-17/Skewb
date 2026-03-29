@@ -315,7 +315,12 @@ function f_mouse_move(event_2) {
             object.angle=Math.atan2(curr_y-cy, curr_x-cx)+(Math.PI/2);
         }
         else
-            f_resize_selected_object(arr[selected_shape_index], active_handle, dx, dy, curr_x, curr_y);
+        {
+            let angle=object.angle;
+            let r_dx=dx*(Math.cos(angle))+dy*(Math.sin(angle))
+            let r_dy=dy*(Math.cos(angle))-dx*(Math.sin(angle));
+            f_resize_selected_object(arr[selected_shape_index], active_handle, r_dx, r_dy, curr_x, curr_y);
+        }
         prev_x=curr_x;
         prev_y=curr_y; f_redraw();
         return;
@@ -656,8 +661,8 @@ function f_hit_test_handles(mouse_x, mouse_y, box, object)
     {
         angle=object.angle;
     }
-    let rotated_mouse_x=Math.cos(-angle)*(mouse_x-cx)-Math.sin(-angle)*(mouse_y-cy)+cx;
-    let rotated_mouse_y=Math.sin(-angle)*(mouse_x-cx)+Math.cos(-angle)*(mouse_y-cy)+cy;
+    let rotated_mouse_x=Math.cos(angle)*(mouse_x-cx)+Math.sin(angle)*(mouse_y-cy)+cx;
+    let rotated_mouse_y=Math.cos(-angle)*(mouse_y-cy)+cy-Math.sin(angle)*(mouse_x-cx);
     let handles=[{x:box.x-half, y:box.y-half},{x:box.x+box.w-half, y:box.y-half},{x:box.x-half, y:box.y+box.h-half},{x:box.x+box.w-half, y:box.y+box.h-half},{x:cx-half, y:box.y-25-half}];
     for(let i=0; i<handles.length; i++)
     {
