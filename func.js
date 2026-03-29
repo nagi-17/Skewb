@@ -125,7 +125,6 @@ function f_draw_object(object){
     }
     else if(object.type==="line")
     {
-        //console.log("Line");
         ctx.moveTo(object.x1, object.y1);
         ctx.lineTo(object.x2, object.y2);
         ctx.stroke();
@@ -158,7 +157,6 @@ function f_draw_object(object){
         ctx.textBaseline="top";
         ctx.fillText(object.text, object.x, object.y);
     }
-    //console.log("Restore");
     ctx.restore();
 }
 
@@ -195,13 +193,11 @@ function f_draw(event_1) {
                 active_handle=f_hit_test_handles(prev_x, prev_y, box,arr[selected_shape_index]);
                 if(active_handle!==-1)
                 {
-                    //console.log("Test active handle");
                     move_select=false;
                     return;
                 }
             }
         }
-        //console.log("select button clicked");
         selected_shape_index=f_hit_test(prev_x, prev_y);
         if(selected_shape_index!==-1)
         {
@@ -241,9 +237,16 @@ function f_draw(event_1) {
     {
         let font_size_text=Math.max(16, parseInt(f_stroke_width())*3);
         let active_text={x: prev_x, y: prev_y, size: font_size_text, color: f_stroke_color(), val: ""};
-
-        function f_commit_text_internal(commit) {
-            if(commit && active_text.val.trim()) {
+        let temp_input=document.createElement("input");
+        temp_input.type="text";
+        temp_input.style.position="absolute";
+        temp_input.style.opacity=0; 
+        temp_input.style.pointerEvents="none";
+        temp_input.style.zIndex=-1;
+        document.body.appendChild(temp_input);
+        setTimeout(function (){temp_input.focus();}, 0)
+        function f_commit_text_internal(event) {
+            if(event&&active_text.val.trim()) {
                 let object=Object.assign(temp(), {type:"text", text:active_text.val.trim(), x:active_text.x, y:active_text.y, size:active_text.size});
                 arr.push(object);
                 arr_temp=[];
@@ -251,13 +254,24 @@ function f_draw(event_1) {
             typing=false;
             f_commit_text=null;
             f_redraw();
-            window.removeEventListener("keydown", f_keydown);
+            if (temp_input.parentNode)
+                document.body.removeChild(temp_input);
         }
-        function f_keydown(e) {
-            e.stopPropagation();
-            if(e.key==="Enter"||e.key==="Escape") { f_commit_text_internal(true); return; }
-            if(e.key==="Backspace") { active_text.val=active_text.val.slice(0, -1); }
-            else if(e.key.length===1) { active_text.val+=e.key; }
+        temp_input.addEventListener("input", function() {
+            active_text.val=temp_input.value;
+            f_redraw_text_preview();
+        });
+        temp_input.addEventListener("keydown", function(event) {
+            event.stopPropagation();
+            if(event.key==="Enter"||event.key==="Escape") { 
+                f_commit_text_internal(true); 
+            }
+        });
+        temp_input.addEventListener("blur", function() {
+            if(typing)
+                f_commit_text_internal(true);
+        });
+        function f_redraw_text_preview() {
             f_redraw();
             ctx.save();
             ctx.font=active_text.size+"px sans-serif";
@@ -272,20 +286,8 @@ function f_draw(event_1) {
             ctx.restore();
         }
         f_commit_text=f_commit_text_internal;
-        window.addEventListener("keydown", f_keydown);
         typing=true;
-        f_redraw();
-        ctx.save();
-        ctx.font = active_text.size+"px sans-serif";
-        ctx.fillStyle=active_text.color;
-        ctx.textBaseline="top";
-        ctx.fillText(active_text.val+"|", active_text.x, active_text.y);
-        let m=ctx.measureText(active_text.val);
-        ctx.strokeStyle="#00a8ff";
-        ctx.lineWidth=1;
-        ctx.setLineDash([4, 3]);
-        ctx.strokeRect(active_text.x-3,active_text.y-3,m.width+16,active_text.size+6);
-        ctx.restore();
+        f_redraw_text_preview();
     }
 }
 
@@ -1077,21 +1079,6 @@ function f_touch_start(e)
         e.preventDefault(); 
     }
     f_draw(f_get_touch(e));
-    if (selected_button==="text")
-    {
-        let mobile_text=prompt("Enter your text:", "");
-        if (mobile_text)
-        {
-            for (let i=0; i<mobile_text.length; i++) {
-                window.dispatchEvent(new KeyboardEvent("keydown", { key: mobile_text[i]}));
-            }
-            window.dispatchEvent(new KeyboardEvent("keydown", { key:"Enter"}));
-        }
-        else
-        {
-            window.dispatchEvent(new KeyboardEvent("keydown", { key:"Escape"}));
-        }
-    }
 }
 function f_touch_move(e){e.preventDefault();f_mouse_move(f_get_touch(e));}
 function f_touch_end(e){
