@@ -244,7 +244,7 @@ body.dark-mode #bottom-bar {
 
 @media (max-width:480px) {
     #sidebar {
-        display:in-line box 
+        display:flex;
     }
     #properties-panel {
         display: none;

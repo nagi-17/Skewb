@@ -181,6 +181,6 @@ window.addEventListener("keydown", function(event){
     }
 })
 
-document.getElementById("mobile-settings").addEventListener("click", function() {
+document.getElementById("sidebar").addEventListener("click", function() {
     document.getElementById("properties-panel").classList.toggle("show");
 });
