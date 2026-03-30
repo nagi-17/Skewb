@@ -43,6 +43,7 @@ function f_active(event) {
     else {
         canvas.style.cursor = "crosshair";
     }
+    f_hide_sidebar();
 }
 
 function f_active_stroke_style(event) {
@@ -179,8 +180,44 @@ window.addEventListener("keydown", function(event){
             selected_button="image";
         }
     }
+    f_hide_sidebar();
 })
 
 document.getElementById("sidebar").addEventListener("click", function() {
     document.getElementById("properties-panel").classList.toggle("show");
 });
+
+function f_hide_sidebar() {
+    let panel=document.getElementById("properties-panel");
+    let sidebar=document.getElementById("sidebar");
+    let stroke_color_label=document.querySelector('label[for="stroke-color"]');
+    let stroke_width_label=document.querySelector('label[for="stroke-width"]');
+    let stroke_style_label=document.querySelector('label[for="stroke-style"]');
+    let style_buttons=document.querySelector('.style-buttons');
+
+    if (selected_button==="image"||selected_button==="eraser")
+    {
+        panel.style.display="none";
+        sidebar.style.display="none";
+
+    }   
+    else
+    {
+        panel.style.display="";
+        sidebar.style.display="";
+        if (selected_button==="text")
+        {
+            stroke_color_label.innerText="FONT COLOR";
+            stroke_width_label.innerText="FONT SIZE:";
+            stroke_style_label.style.display="none";
+            style_buttons.style.display="none";
+        }
+        else
+        {
+            stroke_color_label.innerText="STROKE COLOR";
+            stroke_width_label.innerText="STROKE WIDTH:";
+            stroke_style_label.style.display=""; 
+            style_buttons.style.display=""; 
+        }
+    }
+}
